@@ -6,7 +6,7 @@ import (
 )
 
 func SolutionPartFlag() string {
-	part := flag.String("part", "1", "Specify which part to solve: 1 or 2")
+	part := flag.String("part", "0", "Specify which part to solve: 1 or 2")
 	flag.Parse()
 
 	if *part != "1" && *part != "2" {
