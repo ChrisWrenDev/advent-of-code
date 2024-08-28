@@ -13,7 +13,7 @@ import (
 const baseURL = "https://adventofcode.com"
 
 func getAocSession() (string, error) {
-	file, err := os.Open(".session")
+	file, err := os.Open("../.session")
 	if err != nil {
 		return "", err
 	}
@@ -66,6 +66,11 @@ func aocRequest(url string) ([]byte, error) {
 	}
 
 	return body, nil
+}
+
+func CheckAocCookie() bool {
+	_, err := getAocSession()
+	return err == nil
 }
 
 func GetAocInput(day, year int) []byte {

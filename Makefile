@@ -6,24 +6,24 @@ help: ## Show this help
 	@ grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-20s\033[0m %s\n", $$1, $$2}'
 
 check-cookie:  ## ensures $AOC_SESSION_COOKIE env var is set
-	@ test $${AOC_SESSION_COOKIE?env var not set}
+	@ go run main.go -check-cookie=true
 
-prompt: check-cookie ## get prompt, requires $AOC_SESSION_COOKIE, optional: $DAY and $YEAR
+prompt: ## get prompt, requires $AOC_SESSION_COOKIE, optional: $DAY and $YEAR
 	@ if [[ -n $$DAY && -n $$YEAR ]]; then \
-		go run main.go -get-prompt=true -day $(DAY) -year $(YEAR) -cookie $(AOC_SESSION_COOKIE); \
+		go run main.go -check-cookie=true -get-prompt=true -day $(DAY) -year $(YEAR); \
 	elif [[ -n $$DAY ]]; then \
-		go run main.go -get-prompt=true -day $(DAY) -cookie $(AOC_SESSION_COOKIE); \
+		go run main.go -check-cookie=true -get-prompt=true -day $(DAY); \
 	else \
-		go run main.go -get-prompt=true -cookie $(AOC_SESSION_COOKIE); \
+		go run main.go -check-cookie=true -get-prompt=true; \
 	fi
 
-input: check-cookie ## get input, requires $AOC_SESSION_COOKIE, optional: $DAY and $YEAR
+input: ## get input, requires $AOC_SESSION_COOKIE, optional: $DAY and $YEAR
 	@ if [[ -n $$DAY && -n $$YEAR ]]; then \
-		go run main.go -get-input=true -day $(DAY) -year $(YEAR) -cookie $(AOC_SESSION_COOKIE); \
+		go run main.go -check-cookie=true -get-input=true -day $(DAY) -year $(YEAR); \
 	elif [[ -n $$DAY ]]; then \
-		go run main.go -get-input=true -day $(DAY) -cookie $(AOC_SESSION_COOKIE); \
+		go run main.go -check-cookie=true -get-input=true -day $(DAY); \
 	else \
-		go run main.go -get-input=true -cookie $(AOC_SESSION_COOKIE); \
+		go run main.go -check-cookie=true -get-input=true; \
 	fi
 
 template: ## create initial files for aoc, optional: $DAY and $YEAR
