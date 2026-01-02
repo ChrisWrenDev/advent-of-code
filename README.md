@@ -21,3 +21,54 @@ This repository is a collection of my solutions to the Advent of Code puzzles. E
 2024 [-------------------------] 00/25
 2025 [-------------------------] 00/12
 ```
+
+## AOC
+
+This repository includes a single Bash entrypoint, ./aoc, which is responsible for:
+
+- scaffolding new Advent of Code days
+- running solutions (optionally across multiple languages)
+- delegating to each language’s native test runner
+
+The script does not replace language toolchains (Cargo, Go, npm, etc.). It simply orchestrates them so the repo can be driven with one consistent interface.
+
+```shell
+# creating a new day
+./aoc new YEAR DAY
+
+# running solutions
+./aoc run YEAR DAY
+
+# running tests
+./aoc test
+
+# limit to specific languages
+./aoc new YEAR DAY --lang rust,go
+
+# overwrite exisitng files
+./aoc new YEAR DAY --force
+```
+
+Make sure the script is executable:
+
+```shell
+chmod +x aoc
+```
+
+## Typical Workflow
+
+```shell
+# scaffold a new day
+./aoc new 2023 5
+
+# paste input into 2015/day01/input.txt
+
+# work on solutions
+./aoc run 2015 1 --lang python
+
+# compare implementations
+./aoc run 2015 1 --lang python,rust,go
+
+# make sure nothing broke
+./aoc test
+```

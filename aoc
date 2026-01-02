@@ -1,0 +1,265 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+TEMPLATES="$ROOT/templates"
+INPUTS="$ROOT/inputs"
+
+# Default languages in your stack
+DEFAULT_LANGS=(go python rust ts zig lua)
+
+die() { echo "error: $*" >&2; exit 1; }
+
+usage() {
+  cat <<'EOF'
+Usage:
+  ./aoc test [--lang L1,L2,...]
+  ./aoc run YEAR DAY [--lang L1,L2,...]
+  ./aoc new YEAR DAY [--lang L1,L2,...] [--force]
+
+Conventions:
+  - Day folder: YEAR/dayDD
+  - Input file: inputs/YEAR/DD.txt
+  - Per-day language code lives in YEAR/dayDD/<lang>/
+
+Examples:
+  ./aoc new 2015 1
+  ./aoc run 2015 1 --lang python,rust
+  ./aoc test
+EOF
+}
+
+# Parse --lang csv into array
+parse_langs() {
+  local csv="${1:-}"
+  if [[ -z "$csv" ]]; then
+    LANGS=("${DEFAULT_LANGS[@]}")
+  else
+    IFS=',' read -r -a LANGS <<<"$csv"
+  fi
+}
+
+pad2() { printf "%02d" "$1"; }
+
+day_dir() {
+  local year="$1" day="$2"
+  echo "$ROOT/$year/day$(pad2 "$day")"
+}
+
+input_file() {
+  local year="$1" day="$2"
+  echo "$INPUTS/$year/$(pad2 "$day").txt"
+}
+
+# --- language commands -------------------------------------------------------
+
+run_python() {
+  local year="$1" day="$2"
+  local d; d="$(day_dir "$year" "$day")"
+  [[ -f "$d/python/solution.py" ]] || die "missing $d/python/solution.py"
+  python "$d/python/solution.py"
+}
+
+run_lua() {
+  local year="$1" day="$2"
+  local d; d="$(day_dir "$year" "$day")"
+  [[ -f "$d/lua/solution.lua" ]] || die "missing $d/lua/solution.lua"
+  lua "$d/lua/solution.lua"
+}
+
+run_go() {
+  local year="$1" day="$2"
+  # assumes per-day package exists at languages/go/yYYYY/dDD or in year/day folder
+  local pkg="$ROOT/languages/go/y${year}/d$(pad2 "$day")"
+  if [[ -d "$pkg" ]]; then
+    (cd "$ROOT/languages/go" && go run "./y${year}/d$(pad2 "$day")")
+    return
+  fi
+  local d; d="$(day_dir "$year" "$day")"
+  [[ -f "$d/go/main.go" ]] || die "missing $pkg or $d/go/main.go"
+  (cd "$d/go" && go run .)
+}
+
+run_rust() {
+  local year="$1" day="$2"
+  local manifest="$ROOT/languages/rust/Cargo.toml"
+  local crate="y${year}d$(pad2 "$day")"
+  if [[ -f "$manifest" && -d "$ROOT/languages/rust/crates/$crate" ]]; then
+    cargo run -q -p "$crate" --manifest-path "$manifest"
+    return
+  fi
+  local d; d="$(day_dir "$year" "$day")"
+  [[ -f "$d/rust/Cargo.toml" ]] || die "missing $manifest crate $crate OR $d/rust/Cargo.toml"
+  (cd "$d/rust" && cargo run -q)
+}
+
+run_ts() {
+  local year="$1" day="$2"
+  local entry="$ROOT/languages/ts/src/y${year}/d$(pad2 "$day")/index.ts"
+  if [[ -f "$entry" ]]; then
+    (cd "$ROOT/languages/ts" && node --loader tsx "$entry")
+    return
+  fi
+  local d; d="$(day_dir "$year" "$day")"
+  [[ -f "$d/ts/index.ts" ]] || die "missing $entry or $d/ts/index.ts"
+  (cd "$d/ts" && node --loader tsx index.ts)
+}
+
+run_zig() {
+  local year="$1" day="$2"
+  local entry="$ROOT/languages/zig/src/y${year}/d$(pad2 "$day").zig"
+  if [[ -f "$entry" ]]; then
+    zig run "$entry"
+    return
+  fi
+  local d; d="$(day_dir "$year" "$day")"
+  [[ -f "$d/zig/main.zig" ]] || die "missing $entry or $d/zig/main.zig"
+  zig run "$d/zig/main.zig"
+}
+
+test_rust() { (cd "$ROOT/languages/rust" && cargo test); }
+test_go()   { (cd "$ROOT/languages/go"   && go test ./...); }
+test_ts()   { (cd "$ROOT/languages/ts"   && npm test); }
+test_zig()  { (cd "$ROOT/languages/zig"  && zig build test); }
+test_python(){ (cd "$ROOT/languages/python" && pytest); }
+test_lua()  { (cd "$ROOT/languages/lua" && busted); }
+
+# --- templating/scaffolding --------------------------------------------------
+
+copy_template_dir() {
+  local from="$1" to="$2" force="$3"
+  [[ -d "$from" ]] || die "template dir not found: $from"
+  mkdir -p "$to"
+  shopt -s nullglob
+  local files=("$from"/*)
+  for f in "${files[@]}"; do
+    local base; base="$(basename "$f")"
+    local dest="$to/$base"
+    if [[ -e "$dest" && "$force" != "1" ]]; then
+      echo "skip: $dest exists (use --force)"
+      continue
+    fi
+    cp -R "$f" "$dest"
+    echo "create: $dest"
+  done
+  shopt -u nullglob
+}
+
+cmd_new() {
+  local year="$1" day="$2" langs_csv="${3:-}" force="${4:-0}"
+  parse_langs "$langs_csv"
+  local d; d="$(day_dir "$year" "$day")"
+  mkdir -p "$d"
+
+  for lang in "${LANGS[@]}"; do
+    case "$lang" in
+      python) copy_template_dir "$TEMPLATES/python" "$d/python" "$force" ;;
+      lua)    copy_template_dir "$TEMPLATES/lua"    "$d/lua"    "$force" ;;
+      go)     copy_template_dir "$TEMPLATES/go"     "$d/go"     "$force" ;;
+      ts)     copy_template_dir "$TEMPLATES/ts"     "$d/ts"     "$force" ;;
+      zig)    copy_template_dir "$TEMPLATES/zig"    "$d/zig"    "$force" ;;
+      rust)   copy_template_dir "$TEMPLATES/rust"   "$d/rust"   "$force" ;;
+      *) die "unknown lang: $lang" ;;
+    esac
+  done
+
+  # create input placeholder (gitignored) if not present
+  local in; in="$(input_file "$year" "$day")"
+  mkdir -p "$(dirname "$in")"
+  if [[ ! -f "$in" ]]; then
+    echo -n "" > "$in"
+    echo "create: $in (empty; paste your AoC input)"
+  fi
+}
+
+cmd_run() {
+  local year="$1" day="$2" langs_csv="${3:-}"
+  parse_langs "$langs_csv"
+
+  local in; in="$(input_file "$year" "$day")"
+  [[ -f "$in" ]] || die "missing input file: $in"
+  local stdin
+  stdin="$(cat "$in")"
+
+  echo "== ${year} day$(pad2 "$day") =="
+  local fail=0
+
+  for lang in "${LANGS[@]}"; do
+    echo "--- $lang ---"
+    # pipe input into program
+    if ! printf "%s" "$stdin" | (
+      case "$lang" in
+        python) run_python "$year" "$day" ;;
+        lua)    run_lua "$year" "$day" ;;
+        go)     run_go "$year" "$day" ;;
+        rust)   run_rust "$year" "$day" ;;
+        ts)     run_ts "$year" "$day" ;;
+        zig)    run_zig "$year" "$day" ;;
+        *) die "unknown lang: $lang" ;;
+      esac
+    ); then
+      echo "FAIL: $lang"
+      fail=1
+    fi
+  done
+
+  return "$fail"
+}
+
+cmd_test() {
+  local langs_csv="${1:-}"
+  parse_langs "$langs_csv"
+
+  local fail=0
+  for lang in "${LANGS[@]}"; do
+    echo "== test: $lang =="
+    case "$lang" in
+      rust)   test_rust   || fail=1 ;;
+      go)     test_go     || fail=1 ;;
+      ts)     test_ts     || fail=1 ;;
+      zig)    test_zig    || fail=1 ;;
+      python) test_python || fail=1 ;;
+      lua)    test_lua    || fail=1 ;;
+      *) die "unknown lang: $lang" ;;
+    esac
+  done
+  return "$fail"
+}
+
+# --- main --------------------------------------------------------------------
+
+[[ $# -ge 1 ]] || { usage; exit 1; }
+
+CMD="$1"; shift
+
+LANGS_CSV=""
+FORCE=0
+
+# simple flag parsing
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --lang) LANGS_CSV="${2:-}"; shift 2 ;;
+    --force) FORCE=1; shift ;;
+    -h|--help) usage; exit 0 ;;
+    *) break ;;
+  esac
+done
+
+case "$CMD" in
+  new)
+    [[ $# -ge 2 ]] || die "new requires YEAR DAY"
+    cmd_new "$1" "$2" "$LANGS_CSV" "$FORCE"
+    ;;
+  run)
+    [[ $# -ge 2 ]] || die "run requires YEAR DAY"
+    cmd_run "$1" "$2" "$LANGS_CSV"
+    ;;
+  test)
+    cmd_test "$LANGS_CSV"
+    ;;
+  *)
+    usage
+    die "unknown command: $CMD"
+    ;;
+esac
+
