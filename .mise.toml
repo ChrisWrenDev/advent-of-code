@@ -15,4 +15,5 @@ ruff = "0.4.7"
 [env]
 # Nice defaults (optional)
 AOC_REPO_ROOT = "{{config_root}}"
+NODE_PATH = "{{config_root}}/libs/typescript"
 

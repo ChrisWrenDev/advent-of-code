@@ -35,6 +35,7 @@ fmt lang path:
       go)   cd "{{path}}/go"   && gofmt -w . ;; \
       zig)  cd "{{path}}/zig"  && zig fmt . ;; \
       python) cd "{{path}}/python && ruff format" ;; \
+      typescript) cd "{{path}}/typescript" && npx prettier --write . ;; \
       *) echo "Unknown lang: {{lang}}" >&2; exit 2 ;; \
     esac'
 
@@ -45,6 +46,7 @@ test lang path:
       go)   cd "{{path}}/go"   && go test ./... ;; \
       zig)  cd "{{path}}/zig"  && zig build test ;; \
       python) cd "{{path}}"/python && python -m pytest ;; \
+      typescript) cd "{{path}}/typescript" && npx vitest run ;; \
       *) echo "Unknown lang: {{lang}}" >&2; exit 2 ;; \
     esac'
 
@@ -55,6 +57,7 @@ run lang path:
       go)   cd "{{path}}/go"   && go run ./... ;; \
       zig)  cd "{{path}}/zig"  && zig build run ;; \
       python) cd "{{path}}"/python && python -m main.py ;; \
+      typescript) cd "{{path}}/typescript" && node --loader ts-node/esm src/main.ts ;; \
       *) echo "Unknown lang: {{lang}}" >&2; exit 2 ;; \
     esac'
 
@@ -73,8 +76,15 @@ bench lang path *args:
         cd "{{path}}/zig" && \
         zig build benchmark {{args}} \
         ;; \
-      python) cd "{{path}}/python" && \
-  python -c 'import timeit; print(timeit.timeit("main()", setup="from aoc_day.main import main", number=10))' ;; \
-      *) \
+      python) \
+        cd "{{path}}/python" && \
+        python -c 'import timeit; print(timeit.timeit("main()", setup="from aoc_day.main import main", number=10))' \
+        ;; \
+      typescript) \
+        cd "{{path}}/typescript" && \
+        npx vitest bench \
+        ;; \
+  
+    *) \
         echo "Unknown lang: {{lang}}" >&2; exit 2 ;; \
     esac'

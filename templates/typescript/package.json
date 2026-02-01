@@ -1,0 +1,20 @@
+{
+  "name": "aoc-{{YEAR}}-{{DAY}}",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "run": "ts-node src/main.ts",
+    "test": "vitest run",
+    "bench": "vitest bench",
+    "fmt": "prettier --write ."
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "prettier": "^3.2.5",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.4.0",
+    "vitest": "^1.6.0"
+  }
+}
+

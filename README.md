@@ -6,7 +6,7 @@ Welcome to my **Advent of Code** solutions!
 
 This repository is a collection of my solutions to the Advent of Code puzzles. Each folder contains my approach and code for the corresponding day's challenge.
 
-## Progress
+## ▚ Progress
 
 ```shell
 2015 [-------------------------] 00/25
@@ -22,7 +22,7 @@ This repository is a collection of my solutions to the Advent of Code puzzles. E
 2025 [-------------------------] 00/12
 ```
 
-## AOC
+## ▚ Scaffolding
 
 This repository includes a single Bash entrypoint, ./aoc, which is responsible for:
 
@@ -55,7 +55,7 @@ Make sure the script is executable:
 chmod +x aoc
 ```
 
-## Typical Workflow
+## ▚ Typical Workflow
 
 ```shell
 # scaffold a new day
