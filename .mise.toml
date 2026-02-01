@@ -9,6 +9,9 @@ just = "1.36.0"
 node = "22"
 python = "3.12"
 
+ruff = "0.4.7"
+
+
 [env]
 # Nice defaults (optional)
 AOC_REPO_ROOT = "{{config_root}}"

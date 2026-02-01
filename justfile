@@ -34,6 +34,7 @@ fmt lang path:
       rust) cd "{{path}}/rust" && cargo fmt ;; \
       go)   cd "{{path}}/go"   && gofmt -w . ;; \
       zig)  cd "{{path}}/zig"  && zig fmt . ;; \
+      python) cd "{{path}}/python && ruff format" ;; \
       *) echo "Unknown lang: {{lang}}" >&2; exit 2 ;; \
     esac'
 
@@ -43,6 +44,7 @@ test lang path:
       rust) cd "{{path}}/rust" && cargo test ;; \
       go)   cd "{{path}}/go"   && go test ./... ;; \
       zig)  cd "{{path}}/zig"  && zig build test ;; \
+      python) cd "{{path}}"/python && python -m pytest ;; \
       *) echo "Unknown lang: {{lang}}" >&2; exit 2 ;; \
     esac'
 
@@ -52,6 +54,7 @@ run lang path:
       rust) cd "{{path}}/rust" && cargo run --quiet ;; \
       go)   cd "{{path}}/go"   && go run ./... ;; \
       zig)  cd "{{path}}/zig"  && zig build run ;; \
+      python) cd "{{path}}"/python && python -m main.py ;; \
       *) echo "Unknown lang: {{lang}}" >&2; exit 2 ;; \
     esac'
 
@@ -70,6 +73,8 @@ bench lang path *args:
         cd "{{path}}/zig" && \
         zig build benchmark {{args}} \
         ;; \
+      python) cd "{{path}}/python" && \
+  python -c 'import timeit; print(timeit.timeit("main()", setup="from aoc_day.main import main", number=10))' ;; \
       *) \
         echo "Unknown lang: {{lang}}" >&2; exit 2 ;; \
     esac'
