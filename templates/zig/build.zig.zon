@@ -1,0 +1,6 @@
+.{
+    .name = "aoc-{{YEAR}}-{{DAY}}",
+    .version = "0.1.0",
+    .dependencies = .{},
+}
+
