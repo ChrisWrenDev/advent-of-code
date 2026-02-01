@@ -1,0 +1,15 @@
+[tools]
+# Pin versions per-repo
+go = "1.23.5"
+rust = "stable"
+zig = "0.13.0"
+just = "1.36.0"
+
+# Optional: useful for watchers / scripts
+node = "22"
+python = "3.12"
+
+[env]
+# Nice defaults (optional)
+AOC_REPO_ROOT = "{{config_root}}"
+
